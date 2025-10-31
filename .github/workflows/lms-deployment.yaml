@@ -63,7 +63,7 @@ jobs:
       - name: build backend image
         run: |
           cd api
-          docker build -t ${{ vars.DOCKER_USERNAME}}/api:latest .
+          docker build -t ${{ vars.DOCKER_USERNAME}}api:latest .
       - name: build frontend image
         run: |
           cd webapp
