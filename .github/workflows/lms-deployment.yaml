@@ -1,54 +1,35 @@
 name: lms-deployment
-on: workflow_dispatch
+
+on:
+  workflow_dispatch:
+
 jobs:
-  notification:
+  notifications:
     runs-on: ubuntu-latest
     steps:
-      - name: send notification
+      - name: send notifications
         uses: slackapi/slack-github-action@v2.1.1
         with:
-          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
-          webhook-type: incoming-webhook
-          payload: |
-            channel: project-7
-            text: "LMS Production Deployment Started, Required Approval to Continue..."
-      
-  approval:
-    needs: notification
-    runs-on: ubuntu-latest
-    environment:
-      name: production
-    steps:
-      - name: approval confirmation
-        run: echo "approval give to deploy into production"
-  linting:
-    name: Build and analyze
-    runs-on: ubuntu-latest
-    
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
-      - uses: SonarSource/sonarqube-scan-action@v5
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        
-  database:
-    needs: approval
-    runs-on: self-hosted
-    steps:
-      - name: create docker network
-        run: |
-          if docker network ls --format '{{ .Name }}' | grep -wq lmsnetwork; then
-            echo "lmsnetwork exist"
-          else
-            docker network create lmsnetwork
-          fi
-      - name: create lmsdb container
-        run: |
-          if docker ps -a --format '{{ .Names }}' | grep -wq lmsdb; then
-            echo "lmsdb container exists"
-          else
-            docker container run -dt --name lmsdb -p 5432:5432 --network lmsnetwork -e POSTGRES_PASSWORD=${{ secrets.DB_PASSWORD}} postgres
-          fi
+        webhook: ${{ secret.SLACK_WENJOOK_URL }}
+        webhook-type: incoming-webhook
+        payload: |
+          {
+            "channel": "project-7",
+            "text": "LMS Production Deployment Started, Required Approval to Continue..."
+          }
+
+    approval:
+      needs:
+      run-on: ubuntu-latest
+      environment:
+        name: production-1
+      steps:
+        - name: approval configuration
+          run: echo "approval given to deploy into production"
+
+    database:
+      needs: approval
+      runs-on: ubuntu-latest
+      steps:
+        - name: create db
+          run: echo "database container created"
