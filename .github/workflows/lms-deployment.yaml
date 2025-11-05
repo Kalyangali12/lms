@@ -1,6 +1,6 @@
 name: lms-deployment
 
-on: 
+on:
   workflow_dispatch:
 
 jobs:
@@ -10,7 +10,7 @@ jobs:
       - name: send notifications
         uses: slackapi/slack-github-action@v2.1.1
         with:
-          webhook: ${{ secrets.SLACK_WEBjOOK_URL }}
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook
           payload: |
             {
@@ -26,22 +26,30 @@ jobs:
     steps:
       - name: approval configuration
         run: echo "approval given to deploy into production"
-  
+
   database:
     needs: approval
     runs-on: self-hosted
     steps:
       - name: create docker network
-        run:
+        run: |
           if docker network ls --format '{{ .Name }}' | grep -wq lmsnetwork; then
-            echo "lmsnetwork exists"
+            echo "✅ lmsnetwork already exists"
           else
+            echo "🔧 Creating Docker network: lmsnetwork"
             docker network create lmsnetwork
           fi
+
       - name: create lmsdb container
-        run: 
+        run: |
           if docker ps -a --format '{{ .Names }}' | grep -wq lmsdb; then
-            echo "lmsdb container exits"
-          else        
-            docker container run -dt --name lmsdb -p 5432:5432 --network lmsnetwork -e POSTGRES_PASSWORD=${{ secrets.DB_PASSWORD}} postgres 
+            echo "✅ lmsdb container already exists"
+          else
+            echo "🚀 Starting new lmsdb container"
+            docker container run -dt \
+              --name lmsdb \
+              -p 5432:5432 \
+              --network lmsnetwork \
+              -e POSTGRES_PASSWORD=${{ secrets.DB_PASSWORD }} \
+              postgres
           fi
