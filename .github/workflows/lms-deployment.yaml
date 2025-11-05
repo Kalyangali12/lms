@@ -1,32 +1,39 @@
 name: lms-deployment
-
-on:
-  workflow_dispatch:
-
+on: workflow_dispatch
 jobs:
-  notifications:
+  notification:
     runs-on: ubuntu-latest
     steps:
-      - name: send notifications
+      - name: send notification
         uses: slackapi/slack-github-action@v2.1.1
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook
           payload: |
-            {
-              "channel": "project-7",
-              "text": "LMS Production Deployment Started, Required Approval to Continue..."
-            }
-
+            channel: project-7
+            text: "LMS Production Deployment Started, Required Approval to Continue..."
+      
   approval:
-    needs: notifications
+    needs: notification
     runs-on: ubuntu-latest
     environment:
-      name: production-1
+      name: production
     steps:
-      - name: approval configuration
-        run: echo "approval given to deploy into production"
-
+      - name: approval confirmation
+        run: echo "approval give to deploy into production"
+  linting:
+    name: Build and analyze
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        
   database:
     needs: approval
     runs-on: self-hosted
@@ -34,22 +41,14 @@ jobs:
       - name: create docker network
         run: |
           if docker network ls --format '{{ .Name }}' | grep -wq lmsnetwork; then
-            echo "✅ lmsnetwork already exists"
+            echo "lmsnetwork exist"
           else
-            echo "🔧 Creating Docker network: lmsnetwork"
             docker network create lmsnetwork
           fi
-
       - name: create lmsdb container
         run: |
           if docker ps -a --format '{{ .Names }}' | grep -wq lmsdb; then
-            echo "✅ lmsdb container already exists"
+            echo "lmsdb container exists"
           else
-            echo "🚀 Starting new lmsdb container"
-            docker container run -dt \
-              --name lmsdb \
-              -p 5432:5432 \
-              --network lmsnetwork \
-              -e POSTGRES_PASSWORD=${{ secrets.DB_PASSWORD }} \
-              postgres
+            docker container run -dt --name lmsdb -p 5432:5432 --network lmsnetwork -e POSTGRES_PASSWORD=${{ secrets.DB_PASSWORD}} postgres
           fi
