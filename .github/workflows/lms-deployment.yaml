@@ -26,4 +26,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: create db
-        echo: "database container created"
+        run: echo "database container created"
