@@ -17,7 +17,7 @@ jobs:
     needs: notification
     runs-on: ubuntu-latest
     environment:
-      name: productions:
+      name: productions
     steps: 
       - name: approval confirmation
         run: echo "approval give to deploy into production"
