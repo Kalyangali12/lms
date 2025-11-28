@@ -22,7 +22,6 @@ jobs:
       - name: approval confirmation
         run: echo "approval give to deploy into production"
   linting:
-    name: Build and analyze
     runs-on: ubuntu-latest
     
     steps:
